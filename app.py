@@ -1,47 +1,77 @@
+import flet as ft
 import csv
 from datetime import datetime
 
 FILENAME = "edzesnaplo.csv"
 
-def uj_edzes():
-    datum = datetime.now().strftime("%Y-%m-%d %H:%M")
-    tipus = input("Edzés típusa (pl. súlyzós, futás, nyújtás): ")
-    ido = input("Időtartam (perc): ")
-    kaloria = input("Elégetett kalória (ha tudod, különben üresen hagyhatod): ")
+def main(page: ft.Page):
+    page.title = "🏋️ Edzésnapló"
+    page.vertical_alignment = ft.MainAxisAlignment.START
+    page.scroll = "adaptive"
 
-    with open(FILENAME, mode="a", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([datum, tipus, ido, kaloria])
-    print("Edzés sikeresen hozzáadva!\n")
+    tipus_input = ft.TextField(label="Edzés típusa (pl. futás, súlyzós)", width=300)
+    ido_input = ft.TextField(label="Időtartam (perc)", width=300)
+    kaloria_input = ft.TextField(label="Kalória (opcionális)", width=300)
 
-def listazas():
-    try:
-        with open(FILENAME, mode="r") as file:
-            reader = csv.reader(file)
-            print("\n--- Edzésnapló ---")
-            for sor in reader:
-                print(f"Dátum: {sor[0]}, Típus: {sor[1]}, Idő: {sor[2]} perc, Kalória: {sor[3]}")
-            print("-------------------\n")
-    except FileNotFoundError:
-        print("Még nincs elmentett edzés.\n")
+    lista = ft.Column()
 
-def menu():
-    while True:
-        print("1 - Új edzés felvétele")
-        print("2 - Edzések listázása")
-        print("3 - Kilépés")
+    def edzes_hozzaad(e):
+        datum = datetime.now().strftime("%Y-%m-%d %H:%M")
+        tipus = tipus_input.value
+        ido = ido_input.value
+        kaloria = kaloria_input.value or "-"
 
-        valasztas = input("Válassz: ")
+        with open(FILENAME, mode="a", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow([datum, tipus, ido, kaloria])
 
-        if valasztas == "1":
-            uj_edzes()
-        elif valasztas == "2":
-            listazas()
-        elif valasztas == "3":
-            print("Kilépés...")
-            break
-        else:
-            print("Hibás választás, próbáld újra!\n")
+        tipus_input.value = ""
+        ido_input.value = ""
+        kaloria_input.value = ""
 
-if __name__ == "__main__":
-    menu()
+        snack = ft.SnackBar(
+        content=ft.Row(
+            [
+                ft.Text("✅ Edzés elmentve!", color="white"),
+                ft.TextButton("OK", on_click=lambda e: snack.open == False)
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+        ),
+        bgcolor="#27ae60",
+        duration=3000
+        )
+        page.overlay.append(snack)
+        snack.open = True
+        page.update()
+
+
+    def betoltes(e):
+        lista.controls.clear()
+        try:
+            with open(FILENAME, mode="r") as file:
+                reader = csv.reader(file)
+                for sor in reader:
+                    lista.controls.append(
+                        ft.Text(f"{sor[0]} | {sor[1]} | {sor[2]} perc | {sor[3]} kcal")
+                    )
+        except FileNotFoundError:
+            pass
+        page.update()
+
+    hozzaad_btn = ft.ElevatedButton("Edzés mentése", on_click=edzes_hozzaad)
+    frissit_btn = ft.OutlinedButton("Lista frissítése", on_click=betoltes)
+
+    page.add(
+        ft.Text("🏋️ Saját edzésnapló", size=30, weight="bold"),
+        tipus_input,
+        ido_input,
+        kaloria_input,
+        ft.Row([hozzaad_btn, frissit_btn]),
+        ft.Divider(),
+        ft.Text("Korábbi edzések:", size=20, weight="bold"),
+        lista
+    )
+
+    betoltes(None)
+
+ft.app(target=main)
