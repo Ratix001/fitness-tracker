@@ -1,1 +1,50 @@
 edzesnaplo.csv
+
+# Python bytecode és cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.cache/
+.ipynb_checkpoints/
+
+# Virtuális környezetek
+.venv/
+venv/
+env/
+
+# Build/artefaktok
+dist/
+build/
+wheelhouse/
+pip-wheel-metadata/
+
+# Logok
+logs/
+*.log
+
+# Környezeti változók
+.env
+.env.*.local
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# OS
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Flet (ha létrejön cache)
+.flet/

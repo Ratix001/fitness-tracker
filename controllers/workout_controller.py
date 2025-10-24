@@ -1,0 +1,86 @@
+from datetime import date, timedelta
+from typing import Dict, Any, List, Optional, Set
+
+from models.workout import Workout
+from data.workout_repository import add_workout, load_workouts
+
+
+def save_new_workout(tipus: str, ido: str, kaloria: Optional[str]) -> Dict[str, Any]:
+    """
+    Validate inputs, persist, and return a structured result:
+    { ok: bool, message: str, data: Optional[Workout] }
+    """
+    tipus = (tipus or "").strip()
+    ido = (ido or "").strip()
+    kaloria = (kaloria or "").strip() if kaloria is not None else None
+
+    if not tipus or not ido:
+        return {"ok": False, "message": "Töltsd ki az edzés típusát és idejét!", "data": None}
+
+    try:
+        ido_perc = int(ido)
+        if ido_perc <= 0:
+            raise ValueError
+    except Exception:
+        return {"ok": False, "message": "Az időtartam legyen pozitív egész szám (perc)!", "data": None}
+
+    kal: Optional[int] = None
+    if kaloria:
+        try:
+            kal = int(kaloria)
+            if kal < 0:
+                raise ValueError
+        except Exception:
+            return {"ok": False, "message": "A kalória opcionális, de ha megadod, legyen nemnegatív egész szám!", "data": None}
+
+    workout = Workout.now(tipus=tipus, ido_perc=ido_perc, kaloria=kal)
+    add_workout(workout)
+    return {"ok": True, "message": "Edzés elmentve!", "data": workout}
+
+
+def get_all_workouts() -> List[Workout]:
+    return load_workouts()
+
+
+def get_week_overview(today: Optional[date] = None) -> Set[str]:
+    """
+    Return set of 'YYYY-MM-DD' strings that have workouts in the current week.
+    """
+    if today is None:
+        today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=7)
+
+    days_with_workout: Set[str] = set()
+    for w in load_workouts():
+        try:
+            d_str = w.date_str()
+            d_obj = date.fromisoformat(d_str)
+            if start_of_week <= d_obj < end_of_week:
+                days_with_workout.add(d_str)
+        except Exception:
+            continue
+    return days_with_workout
+
+
+def get_weekly_minutes(today: Optional[date] = None) -> List[int]:
+    """
+    Returns a list of 7 integers representing total minutes per day
+    for the current week (Monday..Sunday), based on saved workouts.
+    """
+    if today is None:
+        today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())  # Monday
+    end_of_week = start_of_week + timedelta(days=7)
+
+    totals = [0] * 7  # Mon..Sun
+    for w in load_workouts():
+        try:
+            d_obj = date.fromisoformat(w.date_str())
+        except Exception:
+            continue
+        if start_of_week <= d_obj < end_of_week:
+            idx = (d_obj - start_of_week).days
+            if 0 <= idx < 7:
+                totals[idx] += int(w.ido_perc or 0)
+    return totals
