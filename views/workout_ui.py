@@ -11,6 +11,7 @@ from controllers.workout_controller import (
 )
 from flet.plotly_chart import PlotlyChart
 import plotly.graph_objects as go
+from collections import defaultdict
 
 def main(page: ft.Page):
     page.title = "🏋️ Edzésnapló"
@@ -23,7 +24,7 @@ def main(page: ft.Page):
     ido_input = ft.TextField(label="Időtartam (perc)", width=300)
     kaloria_input = ft.TextField(label="Kalória (opcionális)", width=300)
 
-    lista = ft.Column()
+    lista = ft.Column(spacing=6, width=720)
     chart_container = ft.Container(
         margin=ft.margin.only(top=0),
         width=720,
@@ -37,15 +38,58 @@ def main(page: ft.Page):
         alignment=ft.alignment.center,
     )
 
+    def make_loader(label: str) -> ft.Container:
+        return ft.Container(
+            width=720,
+            height=310,
+            alignment=ft.alignment.center,
+            content=ft.Column(
+                [
+                    ft.ProgressRing(width=70, height=70, stroke_width=6, color="#27ae60"),
+                    ft.Text(label, size=16, weight="bold"),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+        )
+
+    def show_chart_loading():
+        chart_container.content = make_loader("Heti adatok betöltése…")
+        monthly_chart_container.content = make_loader("Havi adatok betöltése…")
+        chart_container.update()
+        monthly_chart_container.update()
+
+
     def betoltes(e=None):
-        lista.controls.clear()
-        for w in get_all_workouts():
-            kal_text = f"{w.kaloria} kcal" if w.kaloria is not None else "- kcal"
-            lista.controls.append(
-                ft.Text(f"{w.datum} | {w.tipus} | {w.ido_perc} perc | {kal_text}")
-            )
-        page.update()
+        show_chart_loading()
         try:
+            workouts = get_all_workouts()
+            grouped = defaultdict(list)
+            for w in workouts:
+                grouped[w.datum[:10]].append(w)
+
+            lista.controls.clear()
+            if not grouped:
+                lista.controls.append(ft.Text("Nincs rögzített edzés.", italic=True))
+            else:
+                for day in sorted(grouped.keys(), reverse=True):
+                    tiles = []
+                    for w in sorted(grouped[day], key=lambda item: item.datum, reverse=True):
+                        kal_text = f"{w.kaloria} kcal" if w.kaloria is not None else "- kcal"
+                        tiles.append(
+                            ft.ListTile(
+                                title=ft.Text(f"{w.datum[11:]} • {w.tipus}"),
+                                subtitle=ft.Text(f"{w.ido_perc} perc | {kal_text}"),
+                            )
+                        )
+                    lista.controls.append(
+                        ft.ExpansionTile(
+                            title=ft.Text(day, weight="bold"),
+                            controls=tiles,
+                            initially_expanded=False,
+                        )
+                    )
+            lista.update()
             refresh_week_row()
             refresh_chart()
             refresh_month_chart()
@@ -242,6 +286,7 @@ def main(page: ft.Page):
                         ft.Text("Havi kimutatás:", size=20, weight="bold"),
                         monthly_chart_container,
                         ft.Divider(),
+                        ft.Text("Edzés felvétele:", size=20, weight="bold"),
                         tipus_input,
                         ido_input,
                         kaloria_input,
