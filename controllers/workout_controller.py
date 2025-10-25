@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import Dict, Any, List, Optional, Set
+from typing import Dict, Any, List, Optional, Set, Tuple
 
 from models.workout import Workout
 from data.workout_repository import add_workout, load_workouts
@@ -83,4 +83,74 @@ def get_weekly_minutes(today: Optional[date] = None) -> List[int]:
             idx = (d_obj - start_of_week).days
             if 0 <= idx < 7:
                 totals[idx] += int(w.ido_perc or 0)
+    return totals
+
+
+def get_weekly_calories(today: Optional[date] = None) -> List[int]:
+    """
+    Returns a list of 7 integers representing total calories per day
+    for the current week (Monday..Sunday), based on saved workouts.
+    """
+    if today is None:
+        today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=7)
+
+    totals = [0] * 7
+    for w in load_workouts():
+        try:
+            d_obj = date.fromisoformat(w.date_str())
+        except Exception:
+            continue
+        if start_of_week <= d_obj < end_of_week:
+            idx = (d_obj - start_of_week).days
+            if 0 <= idx < 7 and w.kaloria is not None:
+                totals[idx] += int(w.kaloria)
+    return totals
+
+
+def _get_month_bounds(today: Optional[date] = None) -> Tuple[date, date, int]:
+    if today is None:
+        today = date.today()
+    first_day = today.replace(day=1)
+    if first_day.month == 12:
+        next_month = date(first_day.year + 1, 1, 1)
+    else:
+        next_month = date(first_day.year, first_day.month + 1, 1)
+    days_in_month = (next_month - first_day).days
+    return first_day, next_month, days_in_month
+
+
+def get_month_day_labels(today: Optional[date] = None) -> List[str]:
+    _, _, days_in_month = _get_month_bounds(today)
+    return [f"{i + 1:02d}" for i in range(days_in_month)]
+
+
+def get_monthly_minutes(today: Optional[date] = None) -> List[int]:
+    first_day, next_month, days_in_month = _get_month_bounds(today)
+    totals = [0] * days_in_month
+    for w in load_workouts():
+        try:
+            d_obj = date.fromisoformat(w.date_str())
+        except Exception:
+            continue
+        if first_day <= d_obj < next_month:
+            idx = (d_obj - first_day).days
+            if 0 <= idx < days_in_month:
+                totals[idx] += int(w.ido_perc or 0)
+    return totals
+
+
+def get_monthly_calories(today: Optional[date] = None) -> List[int]:
+    first_day, next_month, days_in_month = _get_month_bounds(today)
+    totals = [0] * days_in_month
+    for w in load_workouts():
+        try:
+            d_obj = date.fromisoformat(w.date_str())
+        except Exception:
+            continue
+        if first_day <= d_obj < next_month and w.kaloria is not None:
+            idx = (d_obj - first_day).days
+            if 0 <= idx < days_in_month:
+                totals[idx] += int(w.kaloria)
     return totals

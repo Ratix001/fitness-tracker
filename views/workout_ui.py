@@ -4,13 +4,17 @@ from controllers.workout_controller import (
     get_all_workouts,
     get_week_overview,
     get_weekly_minutes,
+    get_weekly_calories,
+    get_month_day_labels,
+    get_monthly_minutes,
+    get_monthly_calories,
 )
 from flet.plotly_chart import PlotlyChart
 import plotly.graph_objects as go
 
 def main(page: ft.Page):
     page.title = "🏋️ Edzésnapló"
-    greeting_text = ft.Text("Fitness Tracker", size=22, weight="bold", color="#27ae60")
+    title_bar = ft.Text("Fitness Tracker", size=22, weight="bold", color="#27ae60")
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.scroll = "adaptive"
@@ -21,10 +25,16 @@ def main(page: ft.Page):
 
     lista = ft.Column()
     chart_container = ft.Container(
-        margin=ft.margin.only(top=8),
+        margin=ft.margin.only(top=0),
         width=720,
         height=300,
         alignment=ft.alignment.center
+    )
+    monthly_chart_container = ft.Container(
+        margin=ft.margin.only(top=0),
+        width=720,
+        height=320,
+        alignment=ft.alignment.center,
     )
 
     def betoltes(e=None):
@@ -38,6 +48,7 @@ def main(page: ft.Page):
         try:
             refresh_week_row()
             refresh_chart()
+            refresh_month_chart()
         except Exception as ex:
             print(f"[betoltes] refresh error: {ex}")
 
@@ -70,7 +81,13 @@ def main(page: ft.Page):
     days = [(start_of_week + timedelta(days=i)) for i in range(7)]
     day_names = [calendar.day_abbr[d.weekday()] for d in days]
 
-    week_row = ft.Row([], alignment=ft.MainAxisAlignment.CENTER)
+    week_row = ft.ResponsiveRow(
+        columns=18,
+        spacing=8,
+        alignment=ft.MainAxisAlignment.CENTER,
+        run_spacing=8,
+        controls=[]
+    )
 
     def refresh_week_row():
         workout_days_local = get_week_overview()
@@ -81,14 +98,21 @@ def main(page: ft.Page):
             fg = "white" if bg != "white" else "#27ae60"
             day_circles_local.append(
                 ft.Container(
-                    content=ft.Text(day_names[i], size=16, weight="bold", color=fg),
+                    content=ft.Text(
+                        day_names[i],
+                        size=16,
+                        weight="bold",
+                        color=fg,
+                        no_wrap=True,
+                        max_lines=1,
+                    ),
                     width=40,
                     height=40,
                     bgcolor=bg,
                     border_radius=20,
                     alignment=ft.alignment.center,
-                    margin=ft.margin.only(right=8),
-                    border=ft.border.all(1, "#27ae60")
+                    col={"xs":4, "sm":2, "md":1},
+                    border=ft.border.all(1, "#27ae60"),
                 )
             )
 
@@ -98,55 +122,147 @@ def main(page: ft.Page):
 
     def refresh_chart():
         try:
-            # Heti percek lekérése
             minutes = get_weekly_minutes()
-            labels = day_names
-            theme_color = "#27ae60"
+            calories = get_weekly_calories()
 
-            # Ha nincs adat ezen a héten, mutassunk üzenetet
-            if not minutes or sum(minutes) == 0:
-                chart_container.content = ft.Container(
-                    content=ft.Text("Nincs adat ezen a héten.", color="#7f8c8d"),
-                    alignment=ft.alignment.center
+            fig = go.Figure()
+            fig.add_trace(
+                go.Bar(
+                    x=day_names,
+                    y=minutes,
+                    name="Percek",
+                    marker_color="#27ae60",
+                    hovertemplate="%{x}: %{y} perc<extra></extra>",
                 )
-                page.update()
-                return
-
-            fig = go.Figure(
-                data=[go.Bar(x=labels, y=minutes, marker_color=theme_color, hovertemplate="%{x}: %{y} perc<extra></extra>")]
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=day_names,
+                    y=calories,
+                    name="Kalória",
+                    mode="lines+markers",
+                    yaxis="y2",
+                    line=dict(color="#e67e22", width=3),
+                    marker=dict(size=16),
+                    hovertemplate="%{x}: %{y} kcal<extra></extra>",
+                )
             )
             fig.update_layout(
-                title=dict(text="Heti összesített idő (perc)", x=0.5, font=dict(color=theme_color, size=25)),
-                margin=dict(l=20, r=20, t=80, b=20),
-                yaxis=dict(title="Perc", rangemode="tozero", gridcolor="#e5f7ee", tickfont=dict(size=25), title_font=dict(size=25)),
-                xaxis=dict(title="", tickfont=dict(size=25)),
-                height=425,
-                width=700,
-                paper_bgcolor="white",
-                plot_bgcolor="white",
+                template="plotly_dark",
+                margin=dict(l=20, r=20, t=30, b=20),
+                font=dict(size=20),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=24)),
+                yaxis=dict(title="Percek"),
+                yaxis2=dict(title="Kalória", overlaying="y", side="right"),
             )
             chart_container.content = PlotlyChart(fig, expand=True)
         except Exception as ex:
-            chart_container.content = ft.Text(
-                f"Nem sikerült betölteni a diagramot: {ex}", color="#c0392b"
+            chart_container.content = ft.Text(f"Grafikon hiba: {ex}", color="#c0392b")
+        page.update()
+
+    def refresh_month_chart():
+        try:
+            day_labels = get_month_day_labels()
+            minutes = get_monthly_minutes()
+            calories = get_monthly_calories()
+
+            fig = go.Figure()
+            fig.add_trace(
+                go.Bar(
+                    x=day_labels,
+                    y=minutes,
+                    name="Percek",
+                    marker_color="#2980b9",
+                    hovertemplate="Nap %{x}: %{y} perc<extra></extra>",
+                )
             )
+            fig.add_trace(
+                go.Scatter(
+                    x=day_labels,
+                    y=calories,
+                    name="Kalória",
+                    mode="lines+markers",
+                    yaxis="y2",
+                    line=dict(color="#e74c3c", width=3),
+                    marker=dict(size=10),
+                    hovertemplate="Nap %{x}: %{y} kcal<extra></extra>",
+                )
+            )
+            fig.update_layout(
+                template="plotly_dark",
+                margin=dict(l=20, r=20, t=30, b=20),
+                font=dict(size=20),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(size=18),
+                ),
+                xaxis=dict(
+                    title=dict(text="Nap", font=dict(size=18)),
+                    tickfont=dict(size=18),
+                    tickmode="linear",
+                    dtick=2,
+                ),
+                yaxis=dict(
+                    title=dict(text="Percek", font=dict(size=18)),
+                    tickfont=dict(size=18),
+                ),
+                yaxis2=dict(
+                    title=dict(text="Kalória", font=dict(size=18)),
+                    overlaying="y",
+                    side="right",
+                    tickfont=dict(size=18),
+                ),
+            )
+            monthly_chart_container.content = PlotlyChart(fig, expand=True)
+        except Exception as ex:
+            monthly_chart_container.content = ft.Text(f"Havi grafikon hiba: {ex}", color="#c0392b")
         page.update()
 
 
+    # UI összeállítása
     page.add(
-        ft.Column([
-            greeting_text,
-            week_row,
-            tipus_input,
-            ido_input,
-            kaloria_input,
-            ft.Row([hozzaad_btn, frissit_btn], alignment=ft.MainAxisAlignment.CENTER),
-            ft.Divider(),
-            chart_container,
-            ft.Divider(),
-            ft.Text("Korábbi edzések:", size=20, weight="bold"),
-            lista,
-        ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        ft.SafeArea(
+            top=True,
+            bottom=True,
+            left=True,
+            right=True,
+            content=ft.Container(
+                padding=ft.padding.only(top=30, bottom=30),
+                content=ft.Column(
+                    [
+                        title_bar,
+                        week_row,
+                        ft.Divider(),
+                        ft.Text("Heti kimutatás:", size=20, weight="bold"),
+                        chart_container,
+                        ft.Text("Havi kimutatás:", size=20, weight="bold"),
+                        monthly_chart_container,
+                        ft.Divider(),
+                        tipus_input,
+                        ido_input,
+                        kaloria_input,
+                        ft.ResponsiveRow(
+                            columns=12,
+                            spacing=20,
+                            run_spacing=12,
+                            controls=[
+                                ft.Container(content=hozzaad_btn, col={"xs":12, "sm":6, "md":6}),
+                                ft.Container(content=frissit_btn, col={"xs":12, "sm":6, "md":6}),
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                        ),
+                        ft.Text("Korábbi edzések:", size=20, weight="bold"),
+                        lista,
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+            ),
+        )
     )
 
     betoltes()
