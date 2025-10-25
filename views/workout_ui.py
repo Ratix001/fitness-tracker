@@ -11,6 +11,7 @@ from controllers.workout_controller import (
 )
 from flet.plotly_chart import PlotlyChart
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from collections import defaultdict
 
 def main(page: ft.Page):
@@ -169,13 +170,15 @@ def main(page: ft.Page):
             minutes = get_weekly_minutes()
             calories = get_weekly_calories()
 
-            fig = go.Figure()
+            fig = make_subplots(rows=1, cols=1)
+
             fig.add_trace(
                 go.Bar(
                     x=day_names,
                     y=minutes,
                     name="Percek",
                     marker_color="#27ae60",
+                    opacity=0.75,
                     hovertemplate="%{x}: %{y} perc<extra></extra>",
                 )
             )
@@ -185,20 +188,28 @@ def main(page: ft.Page):
                     y=calories,
                     name="Kalória",
                     mode="lines+markers",
-                    yaxis="y2",
                     line=dict(color="#e67e22", width=3),
-                    marker=dict(size=16),
+                    marker=dict(size=10),
                     hovertemplate="%{x}: %{y} kcal<extra></extra>",
                 )
             )
+
             fig.update_layout(
                 template="plotly_dark",
-                margin=dict(l=20, r=20, t=30, b=20),
-                font=dict(size=20),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=24)),
-                yaxis=dict(title="Percek"),
-                yaxis2=dict(title="Kalória", overlaying="y", side="right"),
+                margin=dict(l=20, r=20, t=50, b=40),
+                height=520,
+                font=dict(size=18),
+                legend=dict(
+                    orientation="h",
+                    x=0.5,
+                    y=1.08,
+                    xanchor="center",
+                    font=dict(size=24),
+                ),
+                bargap=0.35,
             )
+            fig.update_yaxes(title_text="Percek / Kalória", rangemode="tozero")
+
             chart_container.content = PlotlyChart(fig, expand=True)
         except Exception as ex:
             chart_container.content = ft.Text(f"Grafikon hiba: {ex}", color="#c0392b")
@@ -210,13 +221,15 @@ def main(page: ft.Page):
             minutes = get_monthly_minutes()
             calories = get_monthly_calories()
 
-            fig = go.Figure()
+            fig = make_subplots(rows=1, cols=1)
+
             fig.add_trace(
                 go.Bar(
                     x=day_labels,
                     y=minutes,
                     name="Percek",
                     marker_color="#2980b9",
+                    opacity=0.75,
                     hovertemplate="Nap %{x}: %{y} perc<extra></extra>",
                 )
             )
@@ -226,41 +239,28 @@ def main(page: ft.Page):
                     y=calories,
                     name="Kalória",
                     mode="lines+markers",
-                    yaxis="y2",
                     line=dict(color="#e74c3c", width=3),
                     marker=dict(size=10),
                     hovertemplate="Nap %{x}: %{y} kcal<extra></extra>",
                 )
             )
+
             fig.update_layout(
                 template="plotly_dark",
-                margin=dict(l=20, r=20, t=30, b=20),
-                font=dict(size=20),
+                margin=dict(l=20, r=20, t=50, b=40),
+                height=520,
+                font=dict(size=18),
                 legend=dict(
                     orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="center",
                     x=0.5,
-                    font=dict(size=18),
+                    y=1.08,
+                    xanchor="center",
+                    font=dict(size=24),
                 ),
-                xaxis=dict(
-                    title=dict(text="Nap", font=dict(size=18)),
-                    tickfont=dict(size=18),
-                    tickmode="linear",
-                    dtick=2,
-                ),
-                yaxis=dict(
-                    title=dict(text="Percek", font=dict(size=18)),
-                    tickfont=dict(size=18),
-                ),
-                yaxis2=dict(
-                    title=dict(text="Kalória", font=dict(size=18)),
-                    overlaying="y",
-                    side="right",
-                    tickfont=dict(size=18),
-                ),
+                bargap=0.35,
             )
+            fig.update_yaxes(title_text="Percek / Kalória", rangemode="tozero")
+
             monthly_chart_container.content = PlotlyChart(fig, expand=True)
         except Exception as ex:
             monthly_chart_container.content = ft.Text(f"Havi grafikon hiba: {ex}", color="#c0392b")
