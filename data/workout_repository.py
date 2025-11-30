@@ -1,11 +1,20 @@
 import csv
+import sys
+import os
 from pathlib import Path
 from typing import List
 
 from models.workout import Workout
 
-# Resolve CSV file relative to project root
-FILENAME = str(Path(__file__).resolve().parents[1] / "edzesnaplo.csv")
+if getattr(sys, "frozen", False):
+    # PROD
+    user_data_dir = os.path.join(os.path.expanduser("~"), "Edzesnaplo")
+    os.makedirs(user_data_dir, exist_ok=True)
+else:
+    # DEV
+    user_data_dir = Path(__file__).resolve().parents[1]
+
+FILENAME = os.path.join(user_data_dir, "edzesnaplo.csv")
 
 def add_workout(workout: Workout) -> None:
     with open(FILENAME, mode="a", newline="", encoding="utf-8") as file:

@@ -15,7 +15,7 @@ from plotly.subplots import make_subplots
 from collections import defaultdict
 
 def main(page: ft.Page):
-    page.title = "🏋️ Edzésnapló"
+    page.title = "Edzésnapló"
     title_bar = ft.Text("Fitness Tracker", size=22, weight="bold", color="#27ae60")
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -71,7 +71,14 @@ def main(page: ft.Page):
 
             lista.controls.clear()
             if not grouped:
-                lista.controls.append(ft.Text("Nincs rögzített edzés.", italic=True))
+                lista.controls.append(
+                    ft.Row(
+                        controls=[
+                            ft.Text("Nincs rögzített edzés.", italic=True, text_align="center")
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER
+                    )
+                )
             else:
                 for day in sorted(grouped.keys(), reverse=True):
                     tiles = []
@@ -295,8 +302,8 @@ def main(page: ft.Page):
                             spacing=20,
                             run_spacing=12,
                             controls=[
-                                ft.Container(content=hozzaad_btn, col={"xs":12, "sm":6, "md":6}),
-                                ft.Container(content=frissit_btn, col={"xs":12, "sm":6, "md":6}),
+                                ft.Container(content=hozzaad_btn, col={"xs":6, "sm":5, "md":4}),
+                                ft.Container(content=frissit_btn, col={"xs":6, "sm":5, "md":4}),
                             ],
                             alignment=ft.MainAxisAlignment.CENTER,
                         ),
