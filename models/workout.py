@@ -2,14 +2,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List
+import uuid
 
 
 DATETIME_FMT = "%Y-%m-%d %H:%M"
-DATE_FMT = "%Y-%m-%d"
 
 
 @dataclass
 class Workout:
+    id: str
     datum: str
     tipus: str
     ido_perc: int
@@ -18,6 +19,7 @@ class Workout:
     @staticmethod
     def now(tipus: str, ido_perc: int, kaloria: Optional[int]) -> "Workout":
         return Workout(
+            id=str(uuid.uuid4()),
             datum=datetime.now().strftime(DATETIME_FMT),
             tipus=tipus,
             ido_perc=ido_perc,
@@ -26,9 +28,11 @@ class Workout:
 
     @staticmethod
     def from_csv_row(row: List[str]) -> Optional["Workout"]:
-        if not row or len(row) < 4:
+        if not row or len(row) < 5:
             return None
-        datum, tipus, ido_str, kaloria_str = row[0], row[1], row[2], row[3]
+        
+        workout_id = row[0]
+        datum, tipus, ido_str, kaloria_str = row[1], row[2], row[3], row[4]
         try:
             # Validate date format but keep as string for UI compatibility
             datetime.strptime(datum, DATETIME_FMT)
@@ -51,15 +55,16 @@ class Workout:
                 kal = None
         else:
             kal = None
-        return Workout(datum=datum, tipus=tipus, ido_perc=ido_perc, kaloria=kal)
+        return Workout(id=workout_id, datum=datum, tipus=tipus, ido_perc=ido_perc, kaloria=kal)
 
-    def to_csv_row(self) -> List[str]:
-        return [
-            self.datum,
-            self.tipus,
-            str(self.ido_perc),
-            str(self.kaloria) if self.kaloria is not None else "-",
-        ]
+    def to_csv_row(self) -> dict:
+        return {
+            "id": self.id or "",
+            "datum": self.datum,
+            "tipus": self.tipus,
+            "ido_perc": str(self.ido_perc),
+            "kaloria": str(self.kaloria) if self.kaloria is not None else "-"
+        }
 
     def date_str(self) -> str:
         """Return 'YYYY-MM-DD' portion for week calculations."""

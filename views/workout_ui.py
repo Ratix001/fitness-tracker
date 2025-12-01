@@ -8,6 +8,8 @@ from controllers.workout_controller import (
     get_month_day_labels,
     get_monthly_minutes,
     get_monthly_calories,
+    delete_workout_by_id,
+    delete_workout
 )
 from flet.plotly_chart import PlotlyChart
 import plotly.graph_objects as go
@@ -60,6 +62,8 @@ def main(page: ft.Page):
         chart_container.update()
         monthly_chart_container.update()
 
+    
+
 
     def betoltes(e=None):
         show_chart_loading()
@@ -84,9 +88,21 @@ def main(page: ft.Page):
                     tiles = []
                     for w in sorted(grouped[day], key=lambda item: item.datum, reverse=True):
                         kal_text = f"{w.kaloria} kcal" if w.kaloria is not None else "- kcal"
+
                         tiles.append(
                             ft.ListTile(
-                                title=ft.Text(f"{w.datum[11:]} • {w.tipus}"),
+                                title=ft.Row(
+                                    [
+                                        ft.Text(f"{w.datum[11:]} • {w.tipus}"),
+                                        ft.IconButton(
+                                            icon=ft.icons.DELETE,
+                                            icon_color="red",
+                                            tooltip="Törlés",
+                                            on_click=lambda e, workout_id=w.id: edzes_torles(workout_id),
+                                        ),
+                                    ],
+                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                ),
                                 subtitle=ft.Text(f"{w.ido_perc} perc | {kal_text}"),
                             )
                         )
@@ -119,6 +135,20 @@ def main(page: ft.Page):
         tipus_input.value = ""
         ido_input.value = ""
         kaloria_input.value = ""
+        page.update()
+        betoltes()
+
+    def edzes_torles(workout_id):
+
+        result = delete_workout_by_id(workout_id)
+        uzenet = result.get("message", "")
+        snack = ft.SnackBar(
+            content=ft.Text(uzenet, color="white"),
+            bgcolor="#c0392b",
+            duration=3000
+        )
+        page.overlay.append(snack)
+        snack.open = True
         page.update()
         betoltes()
 

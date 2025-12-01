@@ -2,13 +2,13 @@ from datetime import date, timedelta
 from typing import Dict, Any, List, Optional, Set, Tuple
 
 from models.workout import Workout
-from data.workout_repository import add_workout, load_workouts
+from data.workout_repository import add_workout, load_workouts, delete_workout
 
 
 def save_new_workout(tipus: str, ido: str, kaloria: Optional[str]) -> Dict[str, Any]:
     """
     Validate inputs, persist, and return a structured result:
-    { ok: bool, message: str, data: Optional[Workout] }
+    { ok: bool, message: str, data: Workout }
     """
     tipus = (tipus or "").strip()
     ido = (ido or "").strip()
@@ -36,6 +36,11 @@ def save_new_workout(tipus: str, ido: str, kaloria: Optional[str]) -> Dict[str, 
     workout = Workout.now(tipus=tipus, ido_perc=ido_perc, kaloria=kal)
     add_workout(workout)
     return {"ok": True, "message": "Edzés elmentve!", "data": workout}
+
+
+def delete_workout_by_id(workout_id: str) -> Dict[str, Any]:
+    delete_workout(workout_id)
+    return {"ok": True, "message": "Edzés törölve!"}
 
 
 def get_all_workouts() -> List[Workout]:
