@@ -21,19 +21,53 @@ Az adatok CSV fájlban tárolódnak a felhasználó saját gépén, és az alkal
 
 # 🛠️ Fejlesztői környezet beállítása
 
-### 1. Virtuális környezet létrehozása (opcionális, ajánlott)
-     
-- `python -m venv venv`
+### Python ellenőrzése
 
-- `source venv/bin/activate      # Linux/macOS`
-
-- `venv\Scripts\activate         # Windows`
-
-### 2. Könyvtárak telepítése
+A projekt Python 3.10+ verzióval működik (ha szükséges módosítsd).
+Ellenőrizd a Python verziót:
+- `python --version`
   
+Ha a rendszered python3-at használ (Linux/macOS):
+- `python3 --version`
+
+### Virtuális környezet létrehozása (erősen ajánlott)
+
+A virtuális környezet biztosítja, hogy a projektedhez tartozó csomagok ne keveredjenek a rendszer más Python programjaival.
+
+🔹 Windows
+```
+python -m venv venv
+venv\Scripts\activate
+```
+🔹 Linux / macOS
+```
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Ha sikerült, a parancssorban megjelenik:
+
+- `(venv)`
+
+### Könyvtárak telepítése
+
+Minden szükséges csomag fel van sorolva a requirements.txt fájlban.
+
+Futtasd:
+
 - `pip install -r requirements.txt`
 
-A requirements.txt tartalmazza az alkalmazás futtatásához és buildeléséhez szükséges csomagokat (Flet, Plotly stb.).
+Ez telepíti az összes szükséges modult:
+
+- Flet → a GUI-hoz
+
+- Plotly → grafikonok
+
+- stb.
+
+👉 Tipp: Ha hibaüzenetet kapsz, futtasd ezt:
+
+- `pip install --upgrade pip`
 
 # ▶️ Futtatási módok
 
@@ -101,4 +135,12 @@ A mezők automatikusan a Workout osztály mezőiből származnak.
 - CSV – adatkezelés
 
 A requirements.txt fájl felsorolja az alkalmazás futtatásához és fejlesztéséhez szükséges Python csomagokat, valamint azok pontos verziószámait.
+
+# Letöltés / Download
+
+Csak ki szeretnéd próbálni az alkalmazást?  
+Töltsd le az előre elkészített Windows telepítőt:
+
+👉 **[setup.exe Letöltés / Download]()**  (Link folyamatban...)
+
 
