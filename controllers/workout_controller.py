@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from typing import Dict, Any, List, Optional, Set, Tuple
 
 from models.workout import Workout
-from data.workout_repository import add_workout, load_workouts, delete_workout
+import data.workout_repository as wr
 
 
 def save_new_workout(tipus: str, ido: str, kaloria: Optional[str]) -> Dict[str, Any]:
@@ -34,17 +34,22 @@ def save_new_workout(tipus: str, ido: str, kaloria: Optional[str]) -> Dict[str, 
             return {"ok": False, "message": "A kalória opcionális, de ha megadod, legyen nemnegatív egész szám!", "data": None}
 
     workout = Workout.now(tipus=tipus, ido_perc=ido_perc, kaloria=kal)
-    add_workout(workout)
+    wr.add_workout(workout)
     return {"ok": True, "message": "Edzés elmentve!", "data": workout}
 
 
 def delete_workout_by_id(workout_id: str) -> Dict[str, Any]:
-    delete_workout(workout_id)
+    wr.delete_workout(workout_id)
     return {"ok": True, "message": "Edzés törölve!"}
 
 
+def delete_all_workouts_controller() -> Dict[str, Any]:
+    wr.delete_all_workouts()
+    return {"ok": True, "message": "Összes edzés törölve!"}
+
+
 def get_all_workouts() -> List[Workout]:
-    return load_workouts()
+    return wr.load_workouts()
 
 
 def get_week_overview(today: Optional[date] = None) -> Set[str]:
@@ -57,7 +62,7 @@ def get_week_overview(today: Optional[date] = None) -> Set[str]:
     end_of_week = start_of_week + timedelta(days=7)
 
     days_with_workout: Set[str] = set()
-    for w in load_workouts():
+    for w in wr.load_workouts():
         try:
             d_str = w.date_str()
             d_obj = date.fromisoformat(d_str)
@@ -79,7 +84,7 @@ def get_weekly_minutes(today: Optional[date] = None) -> List[int]:
     end_of_week = start_of_week + timedelta(days=7)
 
     totals = [0] * 7  # Mon..Sun
-    for w in load_workouts():
+    for w in wr.load_workouts():
         try:
             d_obj = date.fromisoformat(w.date_str())
         except Exception:
@@ -102,7 +107,7 @@ def get_weekly_calories(today: Optional[date] = None) -> List[int]:
     end_of_week = start_of_week + timedelta(days=7)
 
     totals = [0] * 7
-    for w in load_workouts():
+    for w in wr.load_workouts():
         try:
             d_obj = date.fromisoformat(w.date_str())
         except Exception:
@@ -134,7 +139,7 @@ def get_month_day_labels(today: Optional[date] = None) -> List[str]:
 def get_monthly_minutes(today: Optional[date] = None) -> List[int]:
     first_day, next_month, days_in_month = _get_month_bounds(today)
     totals = [0] * days_in_month
-    for w in load_workouts():
+    for w in wr.load_workouts():
         try:
             d_obj = date.fromisoformat(w.date_str())
         except Exception:
@@ -149,7 +154,7 @@ def get_monthly_minutes(today: Optional[date] = None) -> List[int]:
 def get_monthly_calories(today: Optional[date] = None) -> List[int]:
     first_day, next_month, days_in_month = _get_month_bounds(today)
     totals = [0] * days_in_month
-    for w in load_workouts():
+    for w in wr.load_workouts():
         try:
             d_obj = date.fromisoformat(w.date_str())
         except Exception:

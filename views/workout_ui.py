@@ -1,16 +1,5 @@
 import flet as ft
-from controllers.workout_controller import (
-    save_new_workout,
-    get_all_workouts,
-    get_week_overview,
-    get_weekly_minutes,
-    get_weekly_calories,
-    get_month_day_labels,
-    get_monthly_minutes,
-    get_monthly_calories,
-    delete_workout_by_id,
-    delete_workout
-)
+import controllers.workout_controller as wc
 from flet.plotly_chart import PlotlyChart
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -68,7 +57,7 @@ def main(page: ft.Page):
     def betoltes(e=None):
         show_chart_loading()
         try:
-            workouts = get_all_workouts()
+            workouts = wc.get_all_workouts()
             grouped = defaultdict(list)
             for w in workouts:
                 grouped[w.datum[:10]].append(w)
@@ -121,7 +110,7 @@ def main(page: ft.Page):
             print(f"[betoltes] refresh error: {ex}")
 
     def edzes_hozzaad(e):
-        result = save_new_workout(tipus_input.value, ido_input.value, kaloria_input.value)
+        result = wc.save_new_workout(tipus_input.value, ido_input.value, kaloria_input.value)
         uzenet = result.get("message", "")
         snack = ft.SnackBar(
             content=ft.Text(uzenet, color="white"),
@@ -139,8 +128,7 @@ def main(page: ft.Page):
         betoltes()
 
     def edzes_torles(workout_id):
-
-        result = delete_workout_by_id(workout_id)
+        result = wc.delete_workout_by_id(workout_id)
         uzenet = result.get("message", "")
         snack = ft.SnackBar(
             content=ft.Text(uzenet, color="white"),
@@ -152,8 +140,46 @@ def main(page: ft.Page):
         page.update()
         betoltes()
 
+    
+
+    def osszes_edzes_torles(e):
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Biztosan törlöd az ÖSSZES edzést?"),
+            content=ft.Text("Ez a művelet nem vonható vissza."),
+            actions=[
+                ft.TextButton("Mégse", on_click=lambda ev: close_dialog()),
+                ft.TextButton("Törlés", style=ft.ButtonStyle(color="#c0392b"), on_click=lambda ev: confirm_delete_all()),
+            ],
+        )
+
+        def close_dialog():
+            dlg.open = False
+            page.update()
+
+        def confirm_delete_all():
+            dlg.open = False
+            result = wc.delete_all_workouts_controller()
+            snack = ft.SnackBar(
+                content=ft.Text(result.get("message", ""), color="white"),
+                bgcolor="#c0392b",
+                duration=3000,
+            )
+            page.overlay.append(snack)
+            snack.open = True
+            page.update()
+            betoltes()
+
+        page.dialog = dlg
+        dlg.open = True
+        page.update()
+
+
+
     hozzaad_btn = ft.ElevatedButton("Edzés mentése", on_click=edzes_hozzaad)
     frissit_btn = ft.OutlinedButton("Lista frissítése", on_click=betoltes)
+    torol_mindent_btn = ft.ElevatedButton("Összes edzés törlése", on_click=osszes_edzes_torles, style=ft.ButtonStyle(bgcolor="#c0392b", color="white"))
+
 
     # Aktuális hét napjai
     import calendar
@@ -172,7 +198,7 @@ def main(page: ft.Page):
     )
 
     def refresh_week_row():
-        workout_days_local = get_week_overview()
+        workout_days_local = wc.get_week_overview()
         day_circles_local = []
         for i, d in enumerate(days):
             day_str = d.strftime("%Y-%m-%d")
@@ -204,8 +230,8 @@ def main(page: ft.Page):
 
     def refresh_chart():
         try:
-            minutes = get_weekly_minutes()
-            calories = get_weekly_calories()
+            minutes = wc.get_weekly_minutes()
+            calories = wc.get_weekly_calories()
 
             fig = make_subplots(rows=1, cols=1)
 
@@ -254,9 +280,9 @@ def main(page: ft.Page):
 
     def refresh_month_chart():
         try:
-            day_labels = get_month_day_labels()
-            minutes = get_monthly_minutes()
-            calories = get_monthly_calories()
+            day_labels = wc.get_month_day_labels()
+            minutes = wc.get_monthly_minutes()
+            calories = wc.get_monthly_calories()
 
             fig = make_subplots(rows=1, cols=1)
 
@@ -339,11 +365,16 @@ def main(page: ft.Page):
                         ),
                         ft.Text("Korábbi edzések:", size=20, weight="bold"),
                         lista,
+                        ft.Divider(),
+                        ft.Container(
+                            content=torol_mindent_btn,
+                            padding=ft.padding.only(top=10),
+                        ),
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                ),
-            ),
+                )
+            )
         )
     )
 

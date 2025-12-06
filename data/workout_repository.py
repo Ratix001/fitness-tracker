@@ -55,3 +55,10 @@ def delete_workout(workout_id: str) -> None:
         writer.writeheader()
         writer.writerows(rows)
 
+
+def delete_all_workouts() -> None:
+    if not os.path.exists(FILE):
+        return
+    with open(FILE, "w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, FIELDNAMES)
+        writer.writeheader()
