@@ -149,6 +149,6 @@ A requirements.txt fájl felsorolja az alkalmazás futtatásához és fejleszté
 Csak ki szeretnéd próbálni az alkalmazást?  
 Töltsd le az előre elkészített Windows telepítőt:
 
-👉 **[setup.exe Letöltés / Download]()**  (Link folyamatban...)
+👉 **[ Setup.exe Letöltés / Download ](https://github.com/Ratix001/fitness-tracker/releases/download/v0.2/Fitness_Tracker_Setup.exe)**
 
 
