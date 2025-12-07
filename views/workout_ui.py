@@ -1,7 +1,9 @@
 import flet as ft
 import controllers.workout_controller as wc
-from flet.plotly_chart import PlotlyChart
 import plotly.graph_objects as go
+import calendar
+from datetime import date, timedelta
+from flet.plotly_chart import PlotlyChart
 from plotly.subplots import make_subplots
 from collections import defaultdict
 
@@ -12,11 +14,19 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.scroll = "adaptive"
 
-    tipus_input = ft.TextField(label="Edzés típusa (pl. futás, súlyzós)", width=300)
-    ido_input = ft.TextField(label="Időtartam (perc)", width=300)
-    kaloria_input = ft.TextField(label="Kalória (opcionális)", width=300)
 
-    lista = ft.Column(spacing=6, width=720)
+    today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    days = [(start_of_week + timedelta(days=i)) for i in range(7)]
+    day_names = [calendar.day_abbr[d.weekday()] for d in days]
+
+    week_row = ft.ResponsiveRow(
+        columns=18,
+        spacing=8,
+        alignment=ft.MainAxisAlignment.CENTER,
+        run_spacing=8,
+        controls=[]
+    )
     chart_container = ft.Container(
         margin=ft.margin.only(top=0),
         width=720,
@@ -29,6 +39,13 @@ def main(page: ft.Page):
         height=320,
         alignment=ft.alignment.center,
     )
+
+    tipus_input = ft.TextField(label="Edzés típusa (pl. futás, súlyzós)", width=300)
+    ido_input = ft.TextField(label="Időtartam (perc)", width=300)
+    kaloria_input = ft.TextField(label="Kalória (opcionális)", width=300)
+
+    lista = ft.Column(spacing=6, width=720)
+
 
     def make_loader(label: str) -> ft.Container:
         return ft.Container(
@@ -45,17 +62,17 @@ def main(page: ft.Page):
             ),
         )
 
+
     def show_chart_loading():
         chart_container.content = make_loader("Heti adatok betöltése…")
         monthly_chart_container.content = make_loader("Havi adatok betöltése…")
         chart_container.update()
         monthly_chart_container.update()
 
-    
-
 
     def betoltes(e=None):
         show_chart_loading()
+
         try:
             workouts = wc.get_all_workouts()
             grouped = defaultdict(list)
@@ -109,9 +126,15 @@ def main(page: ft.Page):
         except Exception as ex:
             print(f"[betoltes] refresh error: {ex}")
 
+
     def edzes_hozzaad(e):
         result = wc.save_new_workout(tipus_input.value, ido_input.value, kaloria_input.value)
         uzenet = result.get("message", "")
+
+        tipus_input.value = ""
+        ido_input.value = ""
+        kaloria_input.value = ""
+
         snack = ft.SnackBar(
             content=ft.Text(uzenet, color="white"),
             bgcolor="#27ae60" if result.get("ok") else "#c0392b",
@@ -120,12 +143,8 @@ def main(page: ft.Page):
         page.overlay.append(snack)
         snack.open = True
         page.update()
-
-        tipus_input.value = ""
-        ido_input.value = ""
-        kaloria_input.value = ""
-        page.update()
         betoltes()
+
 
     def edzes_torles(workout_id):
         result = wc.delete_workout_by_id(workout_id)
@@ -140,7 +159,6 @@ def main(page: ft.Page):
         page.update()
         betoltes()
 
-    
 
     def osszes_edzes_torles(e):
         dlg = ft.AlertDialog(
@@ -175,27 +193,10 @@ def main(page: ft.Page):
         page.update()
 
 
-
     hozzaad_btn = ft.ElevatedButton("Edzés mentése", on_click=edzes_hozzaad)
     frissit_btn = ft.OutlinedButton("Lista frissítése", on_click=betoltes)
     torol_mindent_btn = ft.ElevatedButton("Összes edzés törlése", on_click=osszes_edzes_torles, style=ft.ButtonStyle(bgcolor="#c0392b", color="white"))
 
-
-    # Aktuális hét napjai
-    import calendar
-    from datetime import date, timedelta
-    today = date.today()
-    start_of_week = today - timedelta(days=today.weekday())
-    days = [(start_of_week + timedelta(days=i)) for i in range(7)]
-    day_names = [calendar.day_abbr[d.weekday()] for d in days]
-
-    week_row = ft.ResponsiveRow(
-        columns=18,
-        spacing=8,
-        alignment=ft.MainAxisAlignment.CENTER,
-        run_spacing=8,
-        controls=[]
-    )
 
     def refresh_week_row():
         workout_days_local = wc.get_week_overview()
@@ -226,7 +227,8 @@ def main(page: ft.Page):
 
         week_row.controls.clear()
         week_row.controls.extend(day_circles_local)
-        page.update()
+        week_row.update()
+
 
     def refresh_chart():
         try:
@@ -276,7 +278,8 @@ def main(page: ft.Page):
             chart_container.content = PlotlyChart(fig, expand=True)
         except Exception as ex:
             chart_container.content = ft.Text(f"Grafikon hiba: {ex}", color="#c0392b")
-        page.update()
+        chart_container.update()
+
 
     def refresh_month_chart():
         try:
@@ -327,7 +330,7 @@ def main(page: ft.Page):
             monthly_chart_container.content = PlotlyChart(fig, expand=True)
         except Exception as ex:
             monthly_chart_container.content = ft.Text(f"Havi grafikon hiba: {ex}", color="#c0392b")
-        page.update()
+        monthly_chart_container.update()
 
 
     # UI összeállítása

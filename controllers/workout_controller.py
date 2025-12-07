@@ -8,7 +8,7 @@ import data.workout_repository as wr
 def save_new_workout(tipus: str, ido: str, kaloria: Optional[str]) -> Dict[str, Any]:
     """
     Validate inputs, persist, and return a structured result:
-    { ok: bool, message: str, data: Workout }
+    { ok: bool, message: str, data: Optional[Workout] }
     """
     tipus = (tipus or "").strip()
     ido = (ido or "").strip()
