@@ -105,6 +105,14 @@ A projekt tartalmaz egy testreszabott main.spec fájlt, amely biztosítja, hogy:
 
 - Flet helyesen becsomagolódjon.
 
+⚠️ Fontos build előtt!
+
+- A main.spec fájl egyik sora tartalmazza a projekted lokális elérési útját:
+
+- `pathex=[r"D:\GitHub\fitness-tracker"],`
+
+Ezt mindenkinél kötelezően át kell írni arra az elérési útra, ahol a projekt valójában található a saját gépeden.
+
 A build indítása:
 
 - `pyinstaller main.spec`
